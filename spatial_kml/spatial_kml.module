@@ -1,0 +1,56 @@
+<?php
+
+/**
+ * @file
+ * TODO: Rework module description
+ */
+
+/**
+* Implementation of hook_requirements().
+*/
+function spatial_kml_requirements($phase) {
+  $requirements = array();
+
+/*
+  $t = get_t();
+
+  // Check that php zip library is installed
+  if (class_exists('ZipArchive')) {
+    $requirements['php_zip'] = array(
+      'title' => $t('php zip extension'),
+      'value' => $t('php zip extension is loaded'),
+      'severity' => REQUIREMENT_OK,
+    );
+  }
+  else {
+    $requirements['php_zip'] = array(
+      'title' => $t('php zip extension'),
+      'value' => $t('The php zip extension was not found. Shapefiles cannot be extracted from zip files'),
+      'severity' => REQUIREMENT_ERROR,
+    );
+  }
+*/
+
+  return $requirements;
+}
+
+/**
+* Open a stream to a KML file
+*/
+function spatial_kml_open($uri) {
+  module_load_include('inc', 'spatial_kml', 'spatial_kml.class');
+  if ($kml = new SpatialKML($uri)) {
+    return $kml;
+  }
+}
+
+function spatial_kml_get_wkt($shapefile_uri) {
+  if ($kml = spatial_kml_open($shapefile_uri)) {
+    if ($spatial_features = $kml->process()) {
+      return $spatial_features;
+    }
+  }
+
+  return NULL;
+}
+

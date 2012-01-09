@@ -1,0 +1,6 @@
+name = Spatial File
+description = Provides a geofield widget to pull geodata from filefields holding shapefiles.
+package = Geo Spatial Tools
+core = 7.x
+dependencies[] = ogr2ogr
+

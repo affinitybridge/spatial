@@ -1,0 +1,65 @@
+<?php
+
+/**
+ * @file
+ * TODO: Rework module description
+ */
+
+define('SPATIAL_FILE_GEOFIELD_GROUP_COLLECTION', 0);
+define('SPATIAL_FILE_GEOFIELD_GROUP_MULTIPLE', 1);
+define('SPATIAL_FILE_GEOFIELD_GROUP_BYTYPE', 2);
+
+/**
+ * Implements hook_field_widget_info().
+ */
+function spatial_file_field_widget_info() {
+  return array(
+    'spatial_file' => array(
+      'label'       => t('Spatial file'),
+      'description' => t('TODO: Change Descr - Display a list of shapefiles as a select list.'),
+      'field types' => array('geofield'),
+      'settings'    => array(
+        'associated_filefield' => array(),
+        'multiple_values' => SPATIAL_FILE_GEOFIELD_GROUP_COLLECTION,
+        'allowed_types' => array('line', 'point', 'polygon'),
+      ),
+      'behaviors' => array(
+        'multiple values' => FIELD_BEHAVIOR_CUSTOM,
+        'default value' => FIELD_BEHAVIOR_NONE,
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_widget_settings_form().
+ */
+function spatial_file_field_widget_settings_form($field, $instance) {
+  module_load_include('inc', 'spatial_file', 'spatial_file.widget');
+  return _spatial_file_widget_settings_form($field, $instance);
+}
+
+/**
+ * Implements hook_field_widget_form().
+ */
+function spatial_file_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+  module_load_include('inc', 'spatial_file', 'spatial_file.widget');
+  return _spatial_file_widget_form($form, $form_state, $field, $instance, $langcode, $items, $delta, $element);
+}
+
+/**
+ * The #value_callback for the file_generic field element.
+ */
+function spatial_file_field_widget_value($element, $input = FALSE, $form_state) {
+  module_load_include('inc', 'spatial_file', 'spatial_file.widget');
+  return _spatial_file_widget_value($element, $input, $form_state);
+}
+
+/**
+ * Implements hook_field_widget_error().
+ */
+// TODO: Can probably ditch this
+function spatial_file_field_widget_error($element, $error, $form, &$form_state) {
+//  form_error($element['fid'], 'yo: '.$error['message']);
+}
+

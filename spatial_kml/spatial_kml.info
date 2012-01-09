@@ -1,0 +1,5 @@
+name = Spatial KML
+description = Provides some handling for reading KML files
+package = Geo Spatial Tools
+core = 7.x
+dependencies[] = ogr2ogr

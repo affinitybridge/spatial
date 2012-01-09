@@ -1,0 +1,6 @@
+name = Spatial Shapefile
+description = Provides some handling for ESRI Shapefiles, integrates with other modules as well.
+package = Geo Spatial Tools
+core = 7.x
+dependencies[] = ogr2ogr
+
