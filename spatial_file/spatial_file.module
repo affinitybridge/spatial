@@ -5,9 +5,9 @@
  * TODO: Rework module description
  */
 
-define('SPATIAL_FILE_GEOFIELD_GROUP_COLLECTION', 0);
-define('SPATIAL_FILE_GEOFIELD_GROUP_MULTIPLE', 1);
-define('SPATIAL_FILE_GEOFIELD_GROUP_BYTYPE', 2);
+define('SPATIAL_FILE_GROUPING_COLLECTION', 0);
+define('SPATIAL_FILE_GROUPING_MULTIPLE', 1);
+define('SPATIAL_FILE_GROUPING_BYTYPE', 2);
 
 /**
  * Implements hook_field_widget_info().
@@ -20,7 +20,7 @@ function spatial_file_field_widget_info() {
       'field types' => array('geofield'),
       'settings'    => array(
         'associated_filefield' => array(),
-        'multiple_values' => SPATIAL_FILE_GEOFIELD_GROUP_COLLECTION,
+        'multiple_values' => SPATIAL_FILE_GROUPING_COLLECTION,
         'allowed_types' => array('line', 'point', 'polygon'),
       ),
       'behaviors' => array(
@@ -62,4 +62,85 @@ function spatial_file_field_widget_value($element, $input = FALSE, $form_state) 
 function spatial_file_field_widget_error($element, $error, $form, &$form_state) {
 //  form_error($element['fid'], 'yo: '.$error['message']);
 }
+
+
+function spatial_file_get_wkt_features($uri) {
+  // TODO:
+  $uri_chunks = explode('.', $uri);
+
+  if (isset($uri_chunks[1])) {
+
+    $file_extension =   spatial_shapefile_get_wkt($uri);
+    // TODO: This should not be a switch, it should invoke a hook to get stuff back
+    switch ($file_extension) {
+
+      case 'zip':
+        return $spatial_features = spatial_shapefile_get_wkt($uri);
+
+    }
+
+  }
+  else {
+    // TODO: Create watchdog entry, spatial_file_get_wkt needs the proper file extension
+  }
+}
+
+
+/**
+ * Exposed function that other modules may use.
+ *
+ * Params: $wkt_features as returned by a few different functions
+ *         $compress_method how to handle multivalues
+ */
+function spatial_file_parse_wkt_features($wkt_features, $grouping_method = SPATIAL_FILE_GROUPING_COLLECTION) {
+  $store_features = array();
+  $return_features = array();
+
+  foreach ($wkt_features as $wkt_feature) {
+    if (!isset($wkt_feature['WKT']) || empty($wkt_feature)) {
+      continue;
+    }
+    switch ($compress_method) {
+
+      case SPATIAL_FILE_GROUPING_COLLECTION:
+        $store_features[] = $wkt_feature['WKT'];
+        break;
+
+      case SPATIAL_FILE_GROUPING_MULTIPLE:
+        $wkt = array('wkt' => $wkt_feature['WKT']);
+        $return_features[] = geofield_compute_values($wkt);
+        break;
+
+      case SPATIAL_FILE_GROUPING_BYTYPE:
+        break;
+
+    } 
+  }
+
+  switch ($compress_method) {
+
+    case SPATIAL_FILE_GROUPING_COLLECTION:
+      $wkt = array('wkt' => 'GEOMETRYCOLLECTION('. implode(','.$store_features));
+      $return_features[] = geofield_compute_values($wkt);
+      break;
+
+    case SPATIAL_FILE_GROUPING_BYTYPE:
+      break;
+
+  }
+
+  return $return_features;
+}
+
+/*
+        foreach ($spatial_features as $map_feature) {
+          if (isset($spatial_features['WKT'])) {
+            // Compute whole field to do comparison and to so the field will save properly.
+            // Needed to pass by reference to geofield_compute_values().
+            $wkt = array('wkt' => $map_feature['WKT']);
+            $field_values[] = geofield_compute_values($wkt);
+          }
+        }
+*/
+
 

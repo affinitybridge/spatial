@@ -58,9 +58,9 @@ function _spatial_file_widget_settings_form($field, $instance) {
       '#title' => t('Multiple value handling'),
       '#options' => array(
         // TODO: Make a hook for these things
-        SHAPEFILE_GEOFIELD_COLLECTION => t('Put every feature from each shapefile into a Geometry Collection value.'),
-        SHAPEFILE_GEOFIELD_MULTIPLE => t('Put each feature into a its own separate geofield value.'),
-        SHAPEFILE_GEOFIELD_BYTYPE => t('Put every feature across all shapefiles into collections by type.'),
+        SPATIAL_FILE_GROUPING_COLLECTION => t('Put every feature from each shapefile into a Geometry Collection value.'),
+        SPATIAL_FILE_GROUPING_MULTIPLE => t('Put each feature into a its own separate geofield value.'),
+        SPATIAL_FILE_GROUPING_BYTYPE => t('Put every feature across all shapefiles into collections by type.'),
       ),
       '#description' => t('Select how multiple values within the shapefile should be handled'),
       '#default_value' => $settings['multiple_values'],
