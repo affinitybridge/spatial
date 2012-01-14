@@ -70,12 +70,12 @@ function spatial_file_get_wkt_features($uri) {
 
   if (isset($uri_chunks[1])) {
 
-    $file_extension =   spatial_shapefile_get_wkt($uri);
+    $file_extension = $uri_chunks[1];
     // TODO: This should not be a switch, it should invoke a hook to get stuff back
     switch ($file_extension) {
 
       case 'zip':
-        return $spatial_features = spatial_shapefile_get_wkt($uri);
+        return spatial_shapefile_get_wkt($uri);
 
     }
 
@@ -120,8 +120,16 @@ function spatial_file_parse_wkt_features($wkt_features, $grouping_method = SPATI
   switch ($compress_method) {
 
     case SPATIAL_FILE_GROUPING_COLLECTION:
-      $wkt = array('wkt' => 'GEOMETRYCOLLECTION('. implode(','.$store_features));
-      $return_features[] = geofield_compute_values($wkt);
+      if ($store_features) {
+        // If there is more than one value to save, wrap in GeometryCollection
+        if (isset($store_features[1])) {
+          $wkt = array('wkt' => 'GEOMETRYCOLLECTION('. implode(',', $store_features) .')');
+        }
+        else {
+          $wkt = array('wkt' => $store_features[0]);
+        }
+        $return_features[] = geofield_compute_values($wkt);
+      }
       break;
 
     case SPATIAL_FILE_GROUPING_BYTYPE:
@@ -131,16 +139,3 @@ function spatial_file_parse_wkt_features($wkt_features, $grouping_method = SPATI
 
   return $return_features;
 }
-
-/*
-        foreach ($spatial_features as $map_feature) {
-          if (isset($spatial_features['WKT'])) {
-            // Compute whole field to do comparison and to so the field will save properly.
-            // Needed to pass by reference to geofield_compute_values().
-            $wkt = array('wkt' => $map_feature['WKT']);
-            $field_values[] = geofield_compute_values($wkt);
-          }
-        }
-*/
-
-
