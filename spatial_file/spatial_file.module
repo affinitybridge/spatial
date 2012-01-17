@@ -64,6 +64,63 @@ function spatial_file_field_widget_error($element, $error, $form, &$form_state) 
 }
 
 
+/**
+ * This function takes an array of spatial files (currently ESRI Shapefile and KML files are supported)
+ *   and processes them into geofield value arrays
+ *
+ *   TODO: Add a parameter to include / exclude types
+ */
+function spatial_file_to_geofield($spatial_files,
+                                    $group_multiple_values = SPATIAL_FILE_GROUPING_COLLECTION,
+                                    $separate_files = 0
+                                ) {
+  $spatial_features = array();
+
+  foreach ($spatial_files as $spatial_file) {
+    $file_uri = '';
+
+    if (is_array($spatial_file)) {
+      if ($file = file_load($spatial_file['fid'])) {
+        $file_uri = $file->uri;
+      }
+      else {
+        // TODO: add a watchdog entry
+        continue;
+      }
+    }
+    else {
+      // TODO: Add processing for fid ints and uri strings
+      continue;
+    }
+
+    if ($file_uri) {
+      if ($file_spatial_features = spatial_file_get_wkt_features($file_uri)) {
+        if ($separate_files) {
+          $spatial_features[] = $file_spatial_features;          
+        }
+        else {
+          $spatial_features = array_merge($spatial_features, $file_spatial_features);
+        }
+      }
+    }
+  }
+  
+  if ($spatial_features) {
+    if ($separate_files) {
+      $geofield_values = array();
+      foreach ($spatial_features as $file_features) {
+        $geofield_values[] = spatial_file_parse_wkt_features($file_features);
+      }
+      return $geofield_values;
+    }
+    else {
+      return spatial_file_parse_wkt_features($spatial_features);
+    }
+  }
+}
+
+
+
 function spatial_file_get_wkt_features($uri) {
   // TODO:
   $uri_chunks = explode('.', $uri);
