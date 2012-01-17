@@ -10,7 +10,7 @@ class SpatialShapefile {
 
   function __construct($uri) {
     $this->uri = $uri;
-    $this->extracted_path = drupal_realpath('public://tmp/spatial_shapefile_'. basename($this->uri, '.zip') . '_spatial_shapefile');
+    $this->extracted_path = drupal_realpath('public://tmp/spatial_shapefile_'. basename($this->uri, '.zip'));
 
     // Unzip.
     $zip = new ArchiverZip(drupal_realpath($this->uri));
@@ -27,11 +27,12 @@ class SpatialShapefile {
 
     // Look for shapefiles.
     $shapefiles = file_scan_directory($this->extracted_path, '/^.*\.(shp)$/');
-    foreach ($shapefiles as $shapefile) {
 
-      $ogr2ogr_shapefile = ogr2ogr_open($shapefile->uri);
-      if ($spatial_features = $ogr2ogr_shapefile->getWkt()) {
-        $result = array_merge($result, $spatial_features);
+    foreach ($shapefiles as $shapefile) {
+      if ($ogr2ogr_shapefile = ogr2ogr_open($shapefile->uri)) {
+        if ($spatial_features = $ogr2ogr_shapefile->getWkt()) {
+          $result = array_merge($result, $spatial_features);
+        }
       }
     }
 
