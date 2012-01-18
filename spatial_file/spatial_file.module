@@ -153,6 +153,19 @@ function spatial_file_parse_wkt_features($wkt_features, $group_multiple_values =
   $store_features = array();
   $return_features = array();
 
+  if (SPATIAL_FILE_GROUPING_BYTYPE == $group_multiple_values) {
+    $geometry_pattern = array(
+      'POINT' => '/^POINT\s*(\(-?\d+\.\d+ -?\d+\.\d+\))$/i',
+      'LINESTRING' => '/^LINESTRING\s*(\(.*\))$/i',
+      'POLYGON' => '/^POLYGON\s*(\(.*\))$/i',
+    );
+    $multiple_string = array(
+      'POINT' => 'MULTIPOINT(%s)',
+      'LINESTRING' => 'MULTILINESTRING(%s)',
+      'POLYGON' => 'MULTIPOLYGON(%s)',
+    );
+  }
+
   foreach ($wkt_features as $wkt_feature) {
     if (!isset($wkt_feature['WKT']) || empty($wkt_feature)) {
       continue;
@@ -172,17 +185,23 @@ function spatial_file_parse_wkt_features($wkt_features, $group_multiple_values =
       case SPATIAL_FILE_GROUPING_BYTYPE:
         $matches = array();
         $feature_type = '';
+
         if (preg_match('/^([A-Z]+)/', $wkt_feature['WKT'], $matches)) {
           $feature_type = $matches[0];
         }
 
         switch ($feature_type) {
+
           case 'POINT':
           case 'LINESTRING':
           case 'POLYGON':
             // These feature types need to be grouped in multiple geometries by type
-            $store_features[$feature_type][] = $wkt_feature['WKT'];
+            $matches = array();
+            if (preg_match($geometry_pattern[$feature_type], $wkt_feature['WKT'], $matches)) {
+              $store_features[$feature_type][] = $matches[1];
+            }
             break;
+
           case 'MULTIPOINT':
           case 'MULTILINESTRING':
           case 'MULTIPOLYGON':
@@ -191,6 +210,7 @@ function spatial_file_parse_wkt_features($wkt_features, $group_multiple_values =
             $wkt = array('wkt' => $wkt_feature['WKT']);
             $return_features[] = geofield_compute_values($wkt);
             break;
+
           case 'GEOMETRYCOLLECTION':
             // TODO: Any GEOMETRYCOLLECTION features should really be broken up into its types
             // For now just block it from going in
@@ -208,10 +228,9 @@ function spatial_file_parse_wkt_features($wkt_features, $group_multiple_values =
       if ($store_features) {
         // If there is more than one value to save, wrap in GeometryCollection
         if (isset($store_features[1])) {
-          $wkt = array('wkt' => 'GEOMETRYCOLLECTION('. implode(',', $store_features) .')');
+          $wkt = array('wkt' => sprintf('GEOMETRYCOLLECTION(%s)', implode(',', $store_features)));
         }
         else {
-//          drupal_set_message('OH SNAP! -- Only one value coming in and its '.substr($store_features[0], 0, 30));
           $wkt = array('wkt' => $store_features[0]);
         }
         $return_features[] = geofield_compute_values($wkt);
@@ -219,37 +238,22 @@ function spatial_file_parse_wkt_features($wkt_features, $group_multiple_values =
       break;
 
     case SPATIAL_FILE_GROUPING_BYTYPE:
-      $collect_features = array();
       foreach ($store_features as $feature_type => $features) {
-        foreach ($features as $feature) {
-          switch ($feature_type) {
-            case 'POINT':
-              $pattern = '/^POINT\((\d+.\d \d.\d+)\)$/i';
-              $replacement = '$1';
-              $yeah =  preg_replace($pattern, $replacement, $feature_type);
-  //            drupal_set_message('yeah '.$yeah);
-              break;
-            case 'LINESTRING':
-              break;
-            case 'POLYGON':
-              break;
-          }
+        switch ($feature_type) {
+          case 'POINT':
+          case 'LINESTRING':
+          case 'POLYGON':
+            // TODO: If there is just one feature of this type then it shouldn't be multi'ed
+            $wkt = array(
+              'wkt' => sprintf($multiple_string[$feature_type], implode(',', $features)),
+            );
+            $return_features[] = geofield_compute_values($wkt);
+            break;
         }
       }
       break;
 
   }
-
-/*
- POINT(0 0)
-LINESTRING(0 0,1 1,1 2)
-POLYGON((0 0,4 0,4 4,0 4,0 0),(1 1, 2 1, 2 2, 1 2,1 1))
-MULTIPOINT(0 0,1 2)
-MULTILINESTRING((0 0,1 1,1 2),(2 3,3 2,5 4))
-MULTIPOLYGON(((0 0,4 0,4 4,0 4,0 0),(1 1,2 1,2 2,1 2,1 1)), ..)
-GEOMETRYCOLLECTION(POINT(2 3),LINESTRING((2 3,3 4)))
-*/
-
 
   return $return_features;
 }
