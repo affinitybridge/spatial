@@ -104,7 +104,7 @@ function spatial_file_to_geofield($spatial_files,
       }
     }
   }
-  
+
   if ($spatial_features) {
     if ($separate_files) {
       $geofield_values = array();
@@ -170,7 +170,11 @@ function spatial_file_parse_wkt_features($wkt_features, $group_multiple_values =
         break;
 
       case SPATIAL_FILE_GROUPING_BYTYPE:
-        list($feature_type) = explode('(', $wkt_feature['WKT']);
+        $matches = array();
+        $feature_type = '';
+        if (preg_match('/^([A-Z]+)/', $wkt_feature['WKT'], $matches)) {
+          $feature_type = $matches[0];
+        }
 
         switch ($feature_type) {
           case 'POINT':
@@ -184,7 +188,8 @@ function spatial_file_parse_wkt_features($wkt_features, $group_multiple_values =
           case 'MULTIPOLYGON':
             // TODO: These multiple geometries should be broken up so that there is only one for each type
             // For now we just don't want hundreds of fields so we can probably save these as they are
-            $return_features[$feature_type][] = $wkt_feature['WKT'];
+            $wkt = array('wkt' => $wkt_feature['WKT']);
+            $return_features[] = geofield_compute_values($wkt);
             break;
           case 'GEOMETRYCOLLECTION':
             // TODO: Any GEOMETRYCOLLECTION features should really be broken up into its types
@@ -206,7 +211,7 @@ function spatial_file_parse_wkt_features($wkt_features, $group_multiple_values =
           $wkt = array('wkt' => 'GEOMETRYCOLLECTION('. implode(',', $store_features) .')');
         }
         else {
-          drupal_set_message('OH SNAP! -- Only one value coming in and its '.substr($store_features[0], 0, 30));
+//          drupal_set_message('OH SNAP! -- Only one value coming in and its '.substr($store_features[0], 0, 30));
           $wkt = array('wkt' => $store_features[0]);
         }
         $return_features[] = geofield_compute_values($wkt);
@@ -214,7 +219,7 @@ function spatial_file_parse_wkt_features($wkt_features, $group_multiple_values =
       break;
 
     case SPATIAL_FILE_GROUPING_BYTYPE:
-      $collect_features[] = array();
+      $collect_features = array();
       foreach ($store_features as $feature_type => $features) {
         foreach ($features as $feature) {
           switch ($feature_type) {
@@ -222,7 +227,7 @@ function spatial_file_parse_wkt_features($wkt_features, $group_multiple_values =
               $pattern = '/^POINT\((\d+.\d \d.\d+)\)$/i';
               $replacement = '$1';
               $yeah =  preg_replace($pattern, $replacement, $feature_type);
-              drupal_set_message('yeah '.$yeah);
+  //            drupal_set_message('yeah '.$yeah);
               break;
             case 'LINESTRING':
               break;
@@ -244,9 +249,6 @@ MULTILINESTRING((0 0,1 1,1 2),(2 3,3 2,5 4))
 MULTIPOLYGON(((0 0,4 0,4 4,0 4,0 0),(1 1,2 1,2 2,1 2,1 1)), ..)
 GEOMETRYCOLLECTION(POINT(2 3),LINESTRING((2 3,3 4)))
 */
-
-
-
 
 
   return $return_features;
