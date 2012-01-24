@@ -44,8 +44,8 @@ function spatial_kml_open($uri) {
   }
 }
 
-function spatial_kml_get_wkt($shapefile_uri) {
-  if ($kml = spatial_kml_open($shapefile_uri)) {
+function spatial_kml_get_wkt($uri) {
+  if ($kml = spatial_kml_open($uri)) {
     if ($spatial_features = $kml->process()) {
       return $spatial_features;
     }
