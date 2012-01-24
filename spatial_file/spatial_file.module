@@ -119,8 +119,6 @@ function spatial_file_to_geofield($spatial_files,
   }
 }
 
-
-
 function spatial_file_get_wkt_features($uri) {
   // TODO:
   $uri_chunks = explode('.', $uri);
@@ -132,9 +130,18 @@ function spatial_file_get_wkt_features($uri) {
     switch ($file_extension) {
 
       case 'zip':
-        return spatial_shapefile_get_wkt($uri);
+        if (module_exists('spatial_shapefile')) {
+          return spatial_shapefile_get_wkt($uri);        
+        }
 
+      case 'kml':
+        if (module_exists('spatial_kml')) {
+          return spatial_kml_get_wkt($uri);        
+        }
     }
+
+    // TODO: This should be a watchdog entry, not a dsm()
+    drupal_set_message('Spatial files of this type ('. $file_extension .') can not currently be processed', 'error');
 
   }
   else {
