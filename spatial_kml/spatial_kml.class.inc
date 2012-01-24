@@ -5,33 +5,20 @@
  * Could also implement Iterator: http://php.net/manual/en/class.iterator.php
  */
 class SpatialKML {
-  var $extracted_path = '';
   var $uri = '';
 
   function __construct($uri) {
-    $this->uri = $uri;
-    $this->extracted_path = drupal_realpath('public://tmp/spatial_kml/'. basename($this->uri, '.zip'));
-
-    // Unzip.
-    $zip = new ArchiverZip(drupal_realpath($this->uri));
-    $zip->extract($this->extracted_path);
-  }
-
-  function __destruct() {
-    // Delete extracted folder.
-    file_unmanaged_delete_recursive($this->extracted_path);
+    // TODO: Check to make sure this file exists
+    $this->uri = drupal_realpath($uri);
   }
 
   function process() {
     $result = array();
 
-    // Look for shapefiles.
-    $shapefiles = file_scan_directory($this->extracted_path, '/^.*\.(shp)$/');
-
-    foreach ($shapefiles as $shapefile) {
-      $ogr2ogr_shapefile = ogr2ogr_open($shapefile->uri);
-      if ($spatial_features = $ogr2ogr_shapefile->getWkt()) {
-        $result = array_merge($result, $spatial_features);
+    if ($ogr2ogr_kml = ogr2ogr_open($this->uri)) {
+      if ($spatial_features = $ogr2ogr_kml->getWkt()) {
+//        print_r($spatial_features);exit(2);
+        $result = $spatial_features;
       }
     }
 
