@@ -11,16 +11,30 @@
  */
 function _spatial_file_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
 
-  $element += array(
-    '#type' => 'markup',
-    '#value' => 'This field is being populated from :',
-    '#value_callback' => 'shapefile_geofield_widget_value',
-  );
+  // Add display_field setting to field because file_field_widget_form() assumes it is set.
+  $field['settings']['display_field'] = 0;
 
-  // TODO: Add a form markup item saying that there are no files to select?
-  return array(
-    'msg' => $element,
-  );
+  $elements = file_field_widget_form($form, $form_state, $field, $instance, $langcode, $items, $delta, $element);
+  $settings = $instance['settings'];
+
+  foreach (element_children($elements) as $delta) {
+    // If not using custom extension validation, ensure this is an image.
+    $supported_extensions = array('zip', 'kml');
+    $extensions = implode(' ', $supported_extensions);
+    $extensions = array_intersect(explode(' ', $extensions), $supported_extensions);
+    $elements[$delta]['#upload_validators']['file_validate_extensions'][0] = implode(' ', $extensions);
+  }
+
+  if ($field['cardinality'] == 1) {
+    // If there's only one field, return it as delta 0.
+    if (empty($elements[0]['#default_value']['fid'])) {
+      $elements[0]['#description'] = theme('file_upload_help', array('description' => $instancex['description'], 'upload_validators' => $elements[0]['#upload_validators']));
+    }
+  }
+  else {
+    $elements['#file_upload_description'] = theme('file_upload_help', array('upload_validators' => $elements[0]['#upload_validators']));
+  }
+  return $elements;
 }
 
 /**
@@ -31,7 +45,8 @@ function _spatial_file_widget_settings_form($field, $instance) {
   $defaults = field_info_widget_settings($widget['type']);
   $settings = array_merge($defaults, $widget['settings']);
 
-  $form = array();
+  // Use the file widget settings form.
+  $form = file_field_widget_settings_form($field, $instance);
 
   if ($widget['type'] == 'spatial_file') {
     $zip_filefields = _spatial_file_widget_get_zip_filefields($field);
@@ -76,7 +91,7 @@ function _spatial_file_widget_settings_form($field, $instance) {
       '#options' => array(
         'line' => t('Line'),
         'point' => t('Point'),
-        'polygon' => t('Polygon.'),
+        'polygon' => t('Polygon'),
       ),
       '#multiple' => TRUE,
     );

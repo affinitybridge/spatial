@@ -10,17 +10,40 @@ define('SPATIAL_FILE_GROUPING_MULTIPLE', 1);
 define('SPATIAL_FILE_GROUPING_BYTYPE', 2);
 
 /**
+ * Implements hook_schema_alter().
+ */
+function spatial_file_schema_alter(&$schema) {
+  // Add associated file id to geofield schema.
+  // @TODO: This is returning schemas of each field rather than for the single
+  // geofield type.
+
+  //_p(array_keys($schema));
+}
+
+/**
+ * Implements hook_field_info_alter().
+ */
+function spatial_file_field_info_alter(&$info) {
+  if (isset($info['geofield'])) {
+    $info['geofield']['settings']['uri_scheme'] = variable_get('file_default_scheme', 'public');
+    $info['geofield']['instance_settings']['file_extensions'] = 'zip kml';
+    $info['geofield']['instance_settings']['file_directory'] = '';
+    $info['geofield']['instance_settings']['max_filesize'] = '';
+  }
+}
+
+/**
  * Implements hook_field_widget_info().
  */
 function spatial_file_field_widget_info() {
   return array(
     'spatial_file' => array(
       'label'       => t('Spatial file'),
-      'description' => t('TODO: Change Descr - Display a list of shapefiles as a select list.'),
       'field types' => array('geofield'),
       'settings'    => array(
-        'associated_filefield' => array(),
-        'multiple_values' => SPATIAL_FILE_GROUPING_COLLECTION,
+        'progress_indicator' => 'throbber',
+        //'associated_filefield' => array(),
+        //'multiple_values' => SPATIAL_FILE_GROUPING_COLLECTION,
         'allowed_types' => array('line', 'point', 'polygon'),
       ),
       'behaviors' => array(
@@ -62,7 +85,6 @@ function spatial_file_field_widget_value($element, $input = FALSE, $form_state) 
 function spatial_file_field_widget_error($element, $error, $form, &$form_state) {
 //  form_error($element['fid'], 'yo: '.$error['message']);
 }
-
 
 /**
  * This function takes an array of spatial files (currently ESRI Shapefile and KML files are supported)
