@@ -10,7 +10,7 @@ class SpatialShapefile {
 
   function __construct($uri) {
     $this->uri = $uri;
-    $this->extracted_path = drupal_realpath('public://tmp/spatial_shapefile_'. basename($this->uri, '.zip'));
+    $this->extracted_path = drupal_realpath('temporary://spatial_shapefile_'. basename($this->uri, '.zip'));
 
     // Unzip.
     $zip = new ArchiverZip(drupal_realpath($this->uri));
